@@ -36,36 +36,3 @@ if not torch.backends.mps.is_available():
     device = torch.device("cpu")
 else:
     device = torch.device("mps")
-
-# Convert FastText model to PyTorch
-pretrained_model_path = './models/cc.pt.300.bin'
-ft_model = fasttext.load_model(pretrained_model_path)
-pt_model = FastText(ft_model)
-pt_model.to(device)
-
-# Convert dataset to PyTorch format
-train_dataset = LegalTextDataset(df_train)
-train_loader = DataLoader(train_dataset, batch_size=64, collate_fn=collate_fn)
-
-# Fine-tune the PyTorch model on the legal text dataset
-optimizer = torch.optim.Adam(pt_model.parameters(), lr=1e-4)
-criterion = nn.CrossEntropyLoss()
-num_epochs = 10
-
-for epoch in range(num_epochs):
-    pt_model.train()
-    for batch_idx, (texts, labels) in enumerate(train_loader):
-        texts = texts.to(device)
-        labels = labels.to(device)
-        
-        optimizer.zero_grad()
-        outputs = pt_model(texts)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        
-        if batch_idx % 100 == 0:
-            print(f'Epoch: {epoch+1}/{num_epochs}, Batch: {batch_idx}/{len(train_loader)}, Loss: {loss.item()}')
-
-# Save the fine-tuned model
-pt_model.save_state_dict('./models/legal_text_ft.pt')
