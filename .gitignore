@@ -129,7 +129,11 @@ dmypy.json
 .pyre/
 
 # Data
+data/
 .xlsx
 .xlsm
 .csv
+
+# Models
+/models
 
