@@ -1,4 +1,5 @@
 from text_preprocessor.text_preprocessor import TextPreprocessor
+from classifier_ner.classifier_ner import Classifier
 import numpy as np
 import os
 import pandas as pd
@@ -11,8 +12,9 @@ preprocessor = TextPreprocessor(model_path)
 df = pd.read_csv('./data/data.csv')
 preprocessed_df = preprocessor.preprocess_text(df, raw_text_column='docContSplitted')
 
-
-
+# Get predictions (Named Entities)
+classifier = Classifier(model_path)
+classified_df = classifier.predict(preprocessed_df)
 
 
 # List infractions evaluated by experts (for holdout sample)

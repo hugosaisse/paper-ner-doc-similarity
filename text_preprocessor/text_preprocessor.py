@@ -2,7 +2,6 @@ import re
 import pandas as pd
 from transformers import AutoTokenizer
 
-
 class TextPreprocessor:
     """
     This class preprocesses and tokenize legal text in portuguese
@@ -30,7 +29,8 @@ class TextPreprocessor:
             df[raw_text_column] = df[raw_text_column].apply(lambda x: self._regex_substitute(x, self.regex_entities))
         if self.common_words:
             df[raw_text_column] = df[raw_text_column].apply(lambda x: self._replace_common_words(x, self.common_words))
-        df['tokens'] = df[raw_text_column].apply(lambda x: self._tokenize_text(x))
+        df[['inputs','tokens']] = df[raw_text_column].apply(lambda x: self._tokenize_text(x))
+        #df['inputs'], df['tokens'] = self._tokenize_text(df[raw_text_column])
         return df
 
     def _remove_common_abbreviations(self, text, regex_abbreviations):
@@ -57,9 +57,9 @@ class TextPreprocessor:
 
     def _tokenize_text(self, text):
         """
-        This function tokenizes text using FastText tokenizer.
+        This function tokenizes text using AutoTokenizer.
         """
         inputs = self.tokenizer(text, max_length=512, truncation=True, return_tensors="pt")
         tokens = inputs.tokens()
         
-        return inputs, tokens
+        return pd.Series([inputs, tokens])
