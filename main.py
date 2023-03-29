@@ -1,4 +1,4 @@
-from text_preprocessor.text_preprocessor import TextPreprocessor
+from text_preprocessor.text_preprocessor import TextPreprocessorChunks
 from classifier_ner.classifier_ner import Classifier
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ else:
 
 # Preprocess and Tokenize
 model_path = 'dominguesm/legal-bert-ner-base-cased-ptbr'
-preprocessor = TextPreprocessor(model_path)
+preprocessor = TextPreprocessorChunks(model_path)
 df = pd.read_csv('./data/data.csv')
 preprocessed_df = preprocessor.preprocess_text(df, raw_text_column='docContSplitted')
 
