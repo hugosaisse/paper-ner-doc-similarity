@@ -148,4 +148,5 @@ class TextPreprocessorChunks:
         """
         inputs = self.tokenizer(text, truncation=False, return_tensors='pt')
         inputs_chunked, tokens_chunked = self._split_dict_chunks(inputs)
+        
         return pd.Series([inputs_chunked, tokens_chunked])
