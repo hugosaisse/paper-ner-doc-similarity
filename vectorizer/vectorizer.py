@@ -104,12 +104,16 @@ class VectorizerInferenceAPI:
                 "inputs": chunk,
             }
 
-            response = requests.post(f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.model_path}",
-                                     headers=headers,
-                                     json=data)
+            success = False
+            while not success:
+                response = requests.post(f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.model_path}",
+                                        headers=headers,
+                                        json=data)
 
-            if response.status_code != 200:
-                raise ValueError(f"Inference API returned a non-200 status code: {response.status_code}")
+                if response.status_code == 200:
+                    success = True
+                elif response.status_code != 503:
+                    raise ValueError(f"Inference API returned a non-200 status code: {response.status_code}")
 
             output = response.json()
 
@@ -133,7 +137,7 @@ class VectorizerInferenceAPI:
 
         try:
             sentence_embedding = torch.stack(embeddings).mean(dim=0)
-        except RuntimeError:   
+        except RuntimeError:
             sentence_embedding = torch.zeros((1, 768))
         return sentence_embedding
 

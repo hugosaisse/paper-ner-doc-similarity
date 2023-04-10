@@ -70,12 +70,19 @@ class TextPreprocessorChunks:
     This class preprocesses and tokenize legal text in portuguese considering the need for chunking
     sentences longer than the max_length of the model.
     """
-    def __init__(self, model_path, regex_entities=None, regex_abbreviations=None, common_words=None, max_length=512):
+    def __init__(self,
+                 model_path,
+                 regex_entities=None,
+                 regex_abbreviations=None,
+                 common_words=None,
+                 max_length=512,
+                 use_strided_chunks=False):
         self.tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
         self.regex_entities = regex_entities
         self.regex_abbreviations = regex_abbreviations
         self.common_words = common_words
         self.max_length = max_length
+        self.use_strided_chunks = use_strided_chunks
 
     def preprocess_text(self, df, raw_text_column='text'):
         """
@@ -118,26 +125,48 @@ class TextPreprocessorChunks:
 
     def _split_dict_chunks(self, input_dict):
         """
-        This function takes in two arguments: the input dictionary input_dict and the number of chunks num_chunks that you want to split the values into. It first initializes an empty dictionary input_chunks with the same keys as the input dictionary.
-
-        It then calculates the chunk size based on the length of the input_ids value in the input dictionary and the desired number of chunks. If the length is not evenly divisible by the number of chunks, it adds an extra chunk to ensure that all data is included.
-
-        Finally, it iterates over the number of chunks and creates a new dictionary input_chunk containing a subset of the values from the input dictionary for the current chunk. It then appends each value to the corresponding list in the input_chunks dictionary.
-
-        The function returns the input_chunks dictionary with each key containing a list of dictionaries, where each dictionary represents a chunk of the original input dictionary.
+        This function takes in the input dictionary input_dict and splits the values into chunks.
+        It first initializes an empty dictionary input_chunks with the same keys as the input dictionary.
+        It then calculates the chunk size based on the length of the input_ids value in the input dictionary.
+        Finally, it iterates over the number of chunks and creates a new dictionary input_chunk containing a
+        subset of the values from the input dictionary for the current chunk. It then appends each value to the
+        corresponding list in the input_chunks dictionary.
+        The function returns the input_chunks dictionary with each key containing a list of dictionaries,
+        where each dictionary represents a chunk of the original input dictionary.
         """
 
         input_chunks = {k: [] for k in input_dict.keys()}
-        token_chunks =[]
-        input_ids_split = torch.split(input_dict['input_ids'], self.max_length, dim=1)
+        token_chunks = []
 
-        for i in range(len(input_ids_split)):
-            input_chunk = {k: torch.split(v, self.max_length, dim=1)[i] for k, v in input_dict.items()}
-            for k, v in input_chunk.items():
-                input_chunks[k].append(v)
-            
-            token_chunk = self.tokenizer.convert_ids_to_tokens(input_chunks['input_ids'][i][0])
-            token_chunks.append(token_chunk)
+        if self.use_strided_chunks:
+            stride = self.max_length // 2
+            input_ids = input_dict['input_ids']
+            n = input_ids.size(1)
+
+            # Create strided chunks
+            idx_start = 0
+            while idx_start < n:
+                idx_end = min(idx_start + self.max_length, n)
+                chunk_slice = slice(idx_start, idx_end)
+
+                input_chunk = {k: v[:, chunk_slice] for k, v in input_dict.items()}
+                for k, v in input_chunk.items():
+                    input_chunks[k].append(v)
+
+                token_chunk = self.tokenizer.convert_ids_to_tokens(input_chunks['input_ids'][-1][0])
+                token_chunks.append(token_chunk)
+
+                idx_start += stride
+        else:
+            input_ids_split = torch.split(input_dict['input_ids'], self.max_length, dim=1)
+
+            for i in range(len(input_ids_split)):
+                input_chunk = {k: torch.split(v, self.max_length, dim=1)[i] for k, v in input_dict.items()}
+                for k, v in input_chunk.items():
+                    input_chunks[k].append(v)
+                
+                token_chunk = self.tokenizer.convert_ids_to_tokens(input_chunks['input_ids'][i][0])
+                token_chunks.append(token_chunk)
         
         return input_chunks, token_chunks
 

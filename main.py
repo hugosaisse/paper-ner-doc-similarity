@@ -40,10 +40,15 @@ classified_df.to_csv('./data/classified_data.csv', index=False)
 # Using feature extraction (last hidden states from pre-trained model)
 text_vectorizer = VectorizerHiddenStates(model_path, embedding_col='full_text_emb_hs', inputs_col='inputs', device=device)
 vectorized_dataset = text_vectorizer.process_dataset(classified_df)
+# Save vectorized dataset to CSV
+vectorized_dataset.to_csv('./data/vectorized_dataset.csv', index=False)
+
 # Vectorize the preprocessed text using the Inference API
 api_key = "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"
 text_vectorizer_api = VectorizerInferenceAPI(model_path, embedding_col='full_text_emb_inf', tokens_col='tokens', api_key=api_key)
 vectorized_dataset_2 = text_vectorizer_api.process_dataset(classified_df)
+# Save vectorized dataset 2 to CSV
+vectorized_dataset_2.to_csv('./data/vectorized_dataset_2.csv', index=False)
 
 # Flatten list of lists containing tokens, labels and predictions
 flattened_df = classified_df.copy(deep=True)
