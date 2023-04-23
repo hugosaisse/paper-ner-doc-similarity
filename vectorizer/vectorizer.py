@@ -1,4 +1,5 @@
 import requests
+import time
 import torch
 from transformers import AutoModel
 
@@ -112,6 +113,8 @@ class VectorizerInferenceAPI:
 
                 if response.status_code == 200:
                     success = True
+                elif response.status_code == 503:
+                    time.sleep(5)
                 elif response.status_code != 503:
                     raise ValueError(f"Inference API returned a non-200 status code: {response.status_code}")
 
