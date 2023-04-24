@@ -1,5 +1,6 @@
 from text_preprocessor.text_preprocessor import TextPreprocessorChunks
 from classifier_ner.classifier_ner import Classifier
+from sim_matrix_calculator.sim_matrix_calculator import SimilarityMatrixCalculator
 from summarizer.summarizer import Summarizer
 from vectorizer.vectorizer import VectorizerHiddenStates, VectorizerInferenceAPI
 import os
@@ -81,8 +82,7 @@ if not os.path.isfile('./data/vectorized_dataset.pkl'):
                                              device=device)
     vectorized_df = text_vectorizer.process_dataset(summarized_df)
 
-    # Preprocess and vectorize the summarized text
-    # Preprocess and Tokenize
+    # Preprocess and vectorize the summarized text versions
     preprocessor = TextPreprocessorChunks(model_path)
     for column in summarized_df.columns:
         if 'summarized_text' in column:
@@ -101,7 +101,14 @@ else:
     # Load vectorized dataset from pickle
     with open('./data/vectorized_dataset.pkl', 'rb') as f:
         vectorized_df = pickle.load(f)
-    
+
+# Calculate similarity matrices from the vectorized dataset (columns specified below)
+columns = ["full_text_emb_hs", "summarized_text_O_emb_hs", "summarized_text_O_TEMPO_LOCAL_emb_hs", "summarized_text_LEG_JURIS_emb_hs"]
+
+similarity_matrix_obj = SimilarityMatrixCalculator(vectorized_df, columns)
+similarity_matrix_obj.calculate_similarity_matrices()
+similarity_matrix_obj.save_similarity_matrices()
+
 """
 # Vectorize the preprocessed text using the Inference API
 api_key = "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"
