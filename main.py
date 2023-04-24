@@ -102,7 +102,12 @@ else:
     with open('./data/vectorized_dataset.pkl', 'rb') as f:
         vectorized_df = pickle.load(f)
 
-# Calculate similarity matrices from the vectorized dataset (columns specified below)
+# Calculate similarity matrices from the vectorized dataset
+# Each column specified below represents a different text representation
+# 1) full_text_emb_hs: full text vectorized using the last hidden states from the pre-trained model
+# 2) summarized_text_O_emb_hs: summarized text removing predictions in ['O'] vectorized using the last hidden states from the pre-trained model
+# 3) summarized_text_O_TEMPO_LOCAL_emb_hs: summarized text removing predictions in ['O', 'B-TEMPO', 'I-TEMPO', 'B-LOCAL', 'I-LOCAL'] vectorized using the last hidden states from the pre-trained model
+# 4) summarized_text_LEG_JURIS_emb_hs: summarized text removing predictions in ['O', 'B-TEMPO', 'I-TEMPO', 'B-LOCAL', 'I-LOCAL', 'B-PESSOA', 'I-PESSOA', 'B-ORGANIZACAO', 'I-ORGANIZACAO'] vectorized using the last hidden states from the pre-trained model
 columns = ["full_text_emb_hs", "summarized_text_O_emb_hs", "summarized_text_O_TEMPO_LOCAL_emb_hs", "summarized_text_LEG_JURIS_emb_hs"]
 
 similarity_matrix_obj = SimilarityMatrixCalculator(vectorized_df, columns)
