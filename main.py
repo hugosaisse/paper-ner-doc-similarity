@@ -114,28 +114,5 @@ similarity_matrix_obj = SimilarityMatrixCalculator(vectorized_df, columns)
 similarity_matrix_obj.calculate_similarity_matrices()
 similarity_matrix_obj.save_similarity_matrices()
 
-"""
-# Vectorize the preprocessed text using the Inference API
-api_key = "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"
-text_vectorizer_api = VectorizerInferenceAPI(model_path, embedding_col='full_text_emb_inf', tokens_col='tokens', api_key=api_key)
-vectorized_dataset_2 = text_vectorizer_api.process_dataset(classified_df)
-# Save vectorized dataset 2 to CSV
-vectorized_dataset_2.to_csv('./data/vectorized_dataset_2.csv', index=False)
-
-# Flatten list of lists containing tokens, labels and predictions
-flattened_df = classified_df.copy(deep=True)
-
-flattened_df['tokens'] = flattened_df['tokens'].apply(lambda x: [item for sublist in x for item in sublist])
-flattened_df['labels'] = flattened_df['labels'].apply(lambda x: [item for sublist in x for item in sublist])
-flattened_df['predictions'] = flattened_df['predictions'].apply(lambda x: [item for sublist in x for item in sublist])
-
-# List infractions evaluated by experts (for holdout sample)
-df_expert1 = pd.read_excel('./data/similarity_experts_evaluation_i.xlsm', sheet_name='Similaridade')
-holdout_violations = np.unique(df_expert1[['Inf A', 'Inf B']].values)
-
-# Select infractions for fine-tuning the Word2Vec FastText model
-df_train = preprocessed_df[~preprocessed_df['infracaoId'].isin(holdout_violations)]
-df_train.reset_index(drop=True, inplace=True)
-"""
 
 
