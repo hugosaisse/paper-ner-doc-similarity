@@ -78,4 +78,3 @@ class SimilarityPairs:
         # Save the mean evaluations DataFrame as an xlsx file
         output_path = os.path.join(self.sim_pairs_folder, output_file)
         mean_evaluations.to_excel(output_path, index=False, engine="openpyxl")
-
