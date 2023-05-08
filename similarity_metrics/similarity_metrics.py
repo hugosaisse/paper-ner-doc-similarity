@@ -66,6 +66,7 @@ class SimilarityMetrics:
                     # precision: how many retrieved infractions are relevant?
                     # precision: (relevant documents, retrieved documents)/(retrieved documents)
                     num = len(top_n_similar_model.intersection(total_similar_expert))
+                    #recall_den = len(top_n_similar_expert)
                     recall_den = len(total_similar_expert)
                     precision_den = len(top_n_similar_model)
 

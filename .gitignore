@@ -134,6 +134,8 @@ data/
 .xlsm
 .csv
 .pkl
+*.pickle
+.txt
 
 # Models
 /models

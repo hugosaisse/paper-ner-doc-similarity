@@ -6,13 +6,13 @@ from transformers import AutoTokenizer
 class TextPreprocessor:
     """
     This class preprocesses and tokenize legal text in portuguese
-    regex_entities is a list of regular expression to remove entity names, phone numbers and addresses
+    regex_list is a list of regular expression to remove entity names, phone numbers and addresses
     regex_abbreviations is a regular expression to remove abbreviations
     common_words is a list of common words to be removed before tokenization
     """
-    def __init__(self, model_path, regex_entities=None, regex_abbreviations=None, common_words=None):
+    def __init__(self, model_path, regex_list=None, regex_abbreviations=None, common_words=None):
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.regex_entities = regex_entities
+        self.regex_list = regex_list
         self.regex_abbreviations = regex_abbreviations
         self.common_words = common_words
 
@@ -26,8 +26,8 @@ class TextPreprocessor:
         """
         if self.regex_abbreviations:
             df[raw_text_column] = df[raw_text_column].apply(lambda x: self._remove_common_abbreviations(x, self.regex_abbreviations))
-        if self.regex_entities:
-            df[raw_text_column] = df[raw_text_column].apply(lambda x: self._regex_substitute(x, self.regex_entities))
+        if self.regex_list:
+            df[raw_text_column] = df[raw_text_column].apply(lambda x: self._regex_substitute(x, self.regex_list))
         if self.common_words:
             df[raw_text_column] = df[raw_text_column].apply(lambda x: self._replace_common_words(x, self.common_words))
         df[['inputs','tokens']] = df[raw_text_column].apply(lambda x: self._tokenize_text(x))
@@ -47,11 +47,11 @@ class TextPreprocessor:
             text = re.sub(r'\b{}\b'.format(word), '', text)
         return text
 
-    def _regex_substitute(self, text, regex_entities):
+    def _regex_substitute(self, text, regex_list):
         """
         This function removes the matching strings from the text based on a list of regular expressions.
         """
-        for regex in regex_entities:
+        for regex in regex_list:
             text = re.sub(regex, '', text)
         return text
 
@@ -72,13 +72,13 @@ class TextPreprocessorChunks:
     """
     def __init__(self,
                  model_path,
-                 regex_entities=None,
+                 regex_list=None,
                  regex_abbreviations=None,
                  common_words=None,
                  max_length=512,
                  use_strided_chunks=False):
         self.tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
-        self.regex_entities = regex_entities
+        self.regex_list = regex_list
         self.regex_abbreviations = regex_abbreviations
         self.common_words = common_words
         self.max_length = max_length
@@ -94,11 +94,11 @@ class TextPreprocessorChunks:
         """
         if self.regex_abbreviations:
             df[raw_text_column] = df[raw_text_column].apply(lambda x: self._remove_common_abbreviations(x, self.regex_abbreviations))
-        if self.regex_entities:
-            df[raw_text_column] = df[raw_text_column].apply(lambda x: self._regex_substitute(x, self.regex_entities))
+        if self.regex_list:
+            df[raw_text_column] = df[raw_text_column].apply(lambda x: self._regex_substitute(x, self.regex_list))
         if self.common_words:
             df[raw_text_column] = df[raw_text_column].apply(lambda x: self._replace_common_words(x, self.common_words))
-        df[['inputs', 'tokens']] = df[raw_text_column].apply(lambda x: self._tokenize_text(x))
+        df[['inputs', 'tokens', 'sentences']] = df[raw_text_column].apply(lambda x: self._tokenize_text(x))
         return df
 
     def _remove_common_abbreviations(self, text, regex_abbreviations):
@@ -115,11 +115,11 @@ class TextPreprocessorChunks:
             text = re.sub(r'\b{}\b'.format(word), '', text)
         return text
 
-    def _regex_substitute(self, text, regex_entities):
+    def _regex_substitute(self, text, regex_list):
         """
         This function removes the matching strings from the text based on a list of regular expressions.
         """
-        for regex in regex_entities:
+        for regex in regex_list:
             text = re.sub(regex, '', text)
         return text
 
@@ -137,6 +137,7 @@ class TextPreprocessorChunks:
 
         input_chunks = {k: [] for k in input_dict.keys()}
         token_chunks = []
+        sentence_chunks = []
 
         if self.use_strided_chunks:
             stride = self.max_length // 2
@@ -153,8 +154,15 @@ class TextPreprocessorChunks:
                 for k, v in input_chunk.items():
                     input_chunks[k].append(v)
 
-                token_chunk = self.tokenizer.convert_ids_to_tokens(input_chunks['input_ids'][-1][0])
+                token_chunk = self.tokenizer.convert_ids_to_tokens(input_chunks['input_ids'][-1][0],
+                                                                   skip_special_tokens=True)
                 token_chunks.append(token_chunk)
+
+                # Convert a list of lists of token ids into a list of strings
+                sentence_chunk = self.tokenizer.decode(input_chunks['input_ids'][i][0],
+                                                       skip_special_tokens=True,
+                                                       clean_up_tokenization_spaces=True)
+                sentence_chunks.append(sentence_chunk)
 
                 idx_start += stride
         else:
@@ -165,10 +173,17 @@ class TextPreprocessorChunks:
                 for k, v in input_chunk.items():
                     input_chunks[k].append(v)
                 
-                token_chunk = self.tokenizer.convert_ids_to_tokens(input_chunks['input_ids'][i][0])
+                token_chunk = self.tokenizer.convert_ids_to_tokens(input_chunks['input_ids'][i][0],
+                                                                   skip_special_tokens=True)
                 token_chunks.append(token_chunk)
+
+                # Convert a list of lists of token ids into a list of strings
+                sentence_chunk = self.tokenizer.decode(input_chunks['input_ids'][i][0],
+                                                       skip_special_tokens=True,
+                                                       clean_up_tokenization_spaces=True)
+                sentence_chunks.append(sentence_chunk)
         
-        return input_chunks, token_chunks
+        return input_chunks, token_chunks, sentence_chunks
 
 
     def _tokenize_text(self, text):
@@ -176,6 +191,6 @@ class TextPreprocessorChunks:
         This function tokenizes text using AutoTokenizer.
         """
         inputs = self.tokenizer(text, truncation=False, return_tensors='pt')
-        inputs_chunked, tokens_chunked = self._split_dict_chunks(inputs)
+        inputs_chunked, tokens_chunked, sentences_chunked = self._split_dict_chunks(inputs)
         
-        return pd.Series([inputs_chunked, tokens_chunked])
+        return pd.Series([inputs_chunked, tokens_chunked, sentences_chunked])

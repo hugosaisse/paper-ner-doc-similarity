@@ -24,7 +24,9 @@ class Summarizer:
             filtered_tokens = [token for token, prediction in zip(tokens, predictions) if prediction not in self.labels_to_filter]
 
             # Convert the list of filtered tokens into a string using the tokenizer
-            summarized_text = self.tokenizer.convert_tokens_to_string(filtered_tokens)
+            summarized_text = self.tokenizer.convert_tokens_to_string(filtered_tokens,
+                                                                      skip_special_tokens=True,
+                                                                      clean_up_tokenization_spaces=True)
             summarized_texts.append(summarized_text)
 
         # Add the summarized_texts as a new column to the DataFrame
