@@ -222,13 +222,14 @@ else:
 
 subfolder = 'sim_matrices'
 
-for df, tag, model in zip([vectorized_hs_df, vectorized_if_df, vectorized_ada_df],
-                          ['hs', 'if', 'ada'],
-                          [model_path, model_path, embedding_model]
-                          ):
+for df, tag, model, emb_type in zip([vectorized_hs_df, vectorized_if_df, vectorized_ada_df],
+                                    ['hs', 'if', 'ada'],
+                                    [model_path, model_path, embedding_model],
+                                    ['tensors', 'tensors', 'lists']
+                                    ):
     if not os.path.isfile(f'./models/{model}/{subfolder}/vectorized_{tag}_dataset.pkl'):
         columns = [f"full_text_emb_{tag}", f"summarized_text_O_emb_{tag}", f"summarized_text_O_TEMPO_LOCAL_emb_{tag}", f"summarized_text_LEG_JURIS_emb_{tag}"]
         print(f"Calculating similarity matrices for {tag}...")
         similarity_matrix_obj = SimilarityMatrixCalculator(df, columns, model)
-        similarity_matrix_obj.calculate_similarity_matrices()
+        similarity_matrix_obj.calculate_similarity_matrices(emb_type)
         similarity_matrix_obj.save_similarity_matrices(subfolder=subfolder)
