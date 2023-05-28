@@ -9,11 +9,14 @@ class SimilarityMetrics:
         # sim_models: a dictionary of infraction pairs with similarity scores given by a model
         self.sim_models = sim_models
 
-    def top_n_similar(self, n, infraction_id, sim_key, sim_column='Sim', threshold=0.0):
+    def top_n_similar(self, n, infraction_id, sim_key, gold_std_infractions, sim_column='Sim', threshold=0.0):
         if sim_key in self.sim_experts:
             sim_dataframe = self.sim_experts[sim_key]
         else:
             sim_dataframe = self.sim_models[sim_key]
+            sim_dataframe = sim_dataframe.reset_index()
+            sim_dataframe = sim_dataframe[sim_dataframe['Inf A'].isin(gold_std_infractions) & sim_dataframe['Inf B'].isin(gold_std_infractions)]
+            sim_dataframe = sim_dataframe.set_index(['Inf A', 'Inf B'])
         
         # how to loc using MultiIndex if infraction_id may be present at any level?
         # sim_dataframe has a MultiIndex with levels 'Inf A' and 'Inf B'
@@ -55,11 +58,11 @@ class SimilarityMetrics:
 
                 for infraction in gold_std_infractions:
                     # top_n_similar_model: top n similar infractions given by the model
-                    top_n_similar_model = self.top_n_similar(n, infraction, sim_model)
+                    top_n_similar_model = self.top_n_similar(n, infraction, sim_model, gold_std_infractions)
                     # top_n_similar_expert: top n similar infractions given by an expert (or mean of experts)
-                    top_n_similar_expert = self.top_n_similar(n, infraction, sim_expert)
+                    top_n_similar_expert = self.top_n_similar(n, infraction, sim_expert, gold_std_infractions)
                     # total_similar_expert: all similar infractions given by an expert (or mean of experts)
-                    total_similar_expert = self.top_n_similar(50, infraction, sim_expert, threshold=0.0)
+                    total_similar_expert = self.top_n_similar(50, infraction, sim_expert, gold_std_infractions, threshold=0.0)
 
                     # recall: how many relevant infractions are retrieved?
                     # recall: (relevant documents, retrieved documents)/(relevant documents)

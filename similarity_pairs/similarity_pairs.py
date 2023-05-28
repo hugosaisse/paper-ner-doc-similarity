@@ -6,10 +6,10 @@ import itertools
 from glob import glob
 
 class SimilarityPairs:
-    def __init__(self, vectorized_df):
+    def __init__(self, vectorized_df=None, sim_matrices_folder=None):
         self.vectorized_df = vectorized_df
         # The folder where the similarity matrices are stored
-        self.sim_matrices_folder = "sim_matrices"
+        self.sim_matrices_folder = sim_matrices_folder
         # The folder where the similarity pairs generated from the similarity matrices will be stored
         self.sim_pairs_folder = "sim_pairs"
 
@@ -66,15 +66,18 @@ class SimilarityPairs:
 
     # Calculate the mean of experts' evaluations and save as a new xlsx file
     def create_mean_experts_evaluation(self, output_file="mean_experts_evaluation.xlsx"):
-        dataframes = self.read_xlsm_files()
-        if not dataframes:
-            print("No xlsm files found in the 'sim_pairs' folder.")
-            return
+        if not os.path.isfile(f'{self.sim_pairs_folder}/{output_file}'):
+            dataframes = self.read_xlsm_files()
+            if not dataframes:
+                print("No xlsm files found in the 'sim_pairs' folder.")
+                return
 
-        # Concatenate DataFrames and group by 'Inf A' and 'Inf B', calculating the mean of 'Sim' values
-        concatenated_df = pd.concat(dataframes)
-        mean_evaluations = concatenated_df.groupby(['Inf A', 'Inf B']).agg({'Sim': np.mean}).reset_index()
+            # Concatenate DataFrames and group by 'Inf A' and 'Inf B', calculating the mean of 'Sim' values
+            concatenated_df = pd.concat(dataframes)
+            mean_evaluations = concatenated_df.groupby(['Inf A', 'Inf B']).agg({'Sim': np.mean}).reset_index()
 
-        # Save the mean evaluations DataFrame as an xlsx file
-        output_path = os.path.join(self.sim_pairs_folder, output_file)
-        mean_evaluations.to_excel(output_path, index=False, engine="openpyxl")
+            # Save the mean evaluations DataFrame as an xlsx file
+            output_path = os.path.join(self.sim_pairs_folder, output_file)
+            mean_evaluations.to_excel(output_path, index=False, engine="openpyxl")
+        else:
+            print(f"File '{output_file}' already exists in the {self.sim_pairs_folder} folder.")
