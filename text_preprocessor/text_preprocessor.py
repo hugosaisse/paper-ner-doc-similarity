@@ -160,8 +160,9 @@ class TextPreprocessorChunks:
 
                 # Convert a list of lists of token ids into a list of strings
                 sentence_chunk = self.tokenizer.decode(input_chunks['input_ids'][i][0],
-                                                       skip_special_tokens=True,
-                                                       clean_up_tokenization_spaces=True)
+                                                       #skip_special_tokens=True,
+                                                       #clean_up_tokenization_spaces=True
+                                                    )
                 sentence_chunks.append(sentence_chunk)
 
                 idx_start += stride
@@ -174,13 +175,15 @@ class TextPreprocessorChunks:
                     input_chunks[k].append(v)
                 
                 token_chunk = self.tokenizer.convert_ids_to_tokens(input_chunks['input_ids'][i][0],
-                                                                   skip_special_tokens=True)
+                                                                   #skip_special_tokens=True
+                                                                   )
                 token_chunks.append(token_chunk)
 
                 # Convert a list of lists of token ids into a list of strings
                 sentence_chunk = self.tokenizer.decode(input_chunks['input_ids'][i][0],
-                                                       skip_special_tokens=True,
-                                                       clean_up_tokenization_spaces=True)
+                                                       #skip_special_tokens=True,
+                                                       #clean_up_tokenization_spaces=True
+                                                       )
                 sentence_chunks.append(sentence_chunk)
         
         return input_chunks, token_chunks, sentence_chunks

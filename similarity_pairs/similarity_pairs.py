@@ -6,12 +6,14 @@ import itertools
 from glob import glob
 
 class SimilarityPairs:
-    def __init__(self, vectorized_df=None, sim_matrices_folder=None):
+    def __init__(self, vectorized_df=None, sim_matrices_folder=None, path=None):
         self.vectorized_df = vectorized_df
         # The folder where the similarity matrices are stored
         self.sim_matrices_folder = sim_matrices_folder
         # The folder where the similarity pairs generated from the similarity matrices will be stored
         self.sim_pairs_folder = "sim_pairs"
+        # The path to the model
+        self.path = path
 
     # Identify all CSV files in the "sim_matrices" folder
     def identify_csv_files(self):
@@ -40,8 +42,8 @@ class SimilarityPairs:
     # Save the DataFrames containing similarity pairs as CSV files in the "sim_pairs" subfolder
     def save_pairs_dataframes(self):
         # Create the "sim_pairs" subfolder if it does not exist
-        if not os.path.exists(self.sim_pairs_folder):
-            os.makedirs(self.sim_pairs_folder)
+        if not os.path.exists(os.path.join(self.path, self.sim_pairs_folder)):
+            os.makedirs(os.path.join(self.path, self.sim_pairs_folder))
 
         # Iterate through the CSV files in the "sim_matrices" folder
         csv_files = self.identify_csv_files()
@@ -51,7 +53,7 @@ class SimilarityPairs:
             # Create a DataFrame containing infraction pairs and their similarity
             pairs_df = self.create_pairs_dataframe(sim_matrix)
             # Save the pairs DataFrame as a CSV file in the "sim_pairs" folder
-            output_file = os.path.join(self.sim_pairs_folder, os.path.basename(file_path))
+            output_file = os.path.join(self.path, self.sim_pairs_folder, os.path.basename(file_path))
             pairs_df.to_csv(output_file, index=False)
 
     # Identify all xlsm files in the "sim_pairs" folder
